@@ -1,7 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { LoginDto } from './login.dto'
 import { JwtService } from '@nestjs/jwt';  
-import { IsNull, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { UserEntity } from 'src/user/user.entity';
 import * as argon from "argon2";
 import * as passport from "passport";
@@ -20,16 +19,11 @@ export class AuthService {
 
     }
 
-    public async verifyPassword(userName: string, password: string): Promise<string> {
+    public async verifyPassword(userName: string, password: string) {
         return this.userRepository.findOne({
-            select: 
-            {
-                userName: true,
-                passwordHash: true
-            },
             where: [
                 {
-                    userName: userName
+                    username: userName
                 }
             ]
         }).then(user => {
@@ -40,13 +34,18 @@ export class AuthService {
                 if (!result) {
                     throw new UnauthorizedException("Invalid password"); 
                 }
-                return this.jwtService.signAsync(
-                    {
-                        id: user.id,
-                        userName: user.userName, 
-                    }
-                );
+                const { passwordHash, ...userNoPassword } = user;
+                return userNoPassword;
             });
         });
+    }
+
+    public login(user: any) {
+        return {
+            access_token: this.jwtService.signAsync({
+                userName: user.userName,
+                sub: user.id
+            })
+        }
     }
 }

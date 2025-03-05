@@ -1,25 +1,26 @@
 import { VoxelBuildEntity } from "src/voxel-build/voxel-build.entity";
 import { Column, Entity, Int32, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity()
+
+@Entity('users')
 export class UserEntity {
 
     @PrimaryGeneratedColumn()
     id: Int32;
 
-    @Column()
-    userName: string;
+    @Column({length: 32, name: 'username', unique: true})
+    username: string;
 
-    @Column()
-    displayName: string;
+    @Column({length: 32, name: 'displayname'})
+    displayname: string;
 
-    @Column()
+    @Column({length: 256, name: 'biography', default: ""})
     biography: string;
 
-    @Column()
+    @Column({name: 'profile_picture_location', default: ""})
     profilePictureLocation: string;
 
-    @Column()
+    @Column({name: 'password_hash'})
     passwordHash: string;
 
     @OneToMany(() => VoxelBuildEntity, voxelBuild => voxelBuild.user)
