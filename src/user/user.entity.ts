@@ -1,14 +1,12 @@
 import { VoxelBuildEntity } from "src/voxel-build/voxel-build.entity";
-import { Column, Entity, Int32, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Int32, OneToMany, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
+import { Exclude } from 'class-transformer';
 
 
 @Entity('users')
 export class UserEntity {
 
-    @PrimaryGeneratedColumn()
-    id: Int32;
-
-    @Column({length: 32, name: 'username', unique: true})
+    @PrimaryColumn({length: 32, name: 'username'})
     username: string;
 
     @Column({length: 32, name: 'displayname'})
@@ -20,6 +18,7 @@ export class UserEntity {
     @Column({name: 'profile_picture_location', default: ""})
     profilePictureLocation: string;
 
+    @Exclude()
     @Column({name: 'password_hash'})
     passwordHash: string;
 

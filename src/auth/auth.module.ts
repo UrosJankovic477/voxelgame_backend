@@ -19,5 +19,6 @@ import { Repository } from 'typeorm';
   ],
   controllers: [AuthController],
   providers: [AuthService, LocalStrategy, JwtStrategy, Repository],
+  exports: [AuthModule]
 })
 export class AuthModule {}

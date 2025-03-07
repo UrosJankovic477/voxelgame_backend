@@ -43,7 +43,7 @@ export class AuthService {
     public login(user: any) {
         return {
             access_token: this.jwtService.signAsync({
-                userName: user.userName,
+                username: user.username,
                 sub: user.id
             })
         }
