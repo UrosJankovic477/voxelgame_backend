@@ -1,32 +1,21 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';  
-import { Repository } from 'typeorm';
-import { UserEntity } from 'src/user/user.entity';
 import * as argon from "argon2";
+import { log } from 'console';
 import * as passport from "passport";
 import * as localStrategy from "passport-local";
-
-export enum LoginStatus {
-    Succes,
-    WrongPassword,
-    WrongUserName,
-}
+import { UserDto } from 'src/user/user.dto';
+import { UserService } from 'src/user/user.service';
 
 @Injectable()
 export class AuthService {
 
-    public constructor(private userRepository: Repository<UserEntity>, private jwtService: JwtService) {
+    public constructor(private userService: UserService, private jwtService: JwtService) {
 
     }
 
-    public async verifyPassword(userName: string, password: string) {
-        return this.userRepository.findOne({
-            where: [
-                {
-                    username: userName
-                }
-            ]
-        }).then(user => {
+    public async verifyPassword(username: string, password: string) {
+        return this.userService.userGetWithHash(username).then(user => {
             if (user == null) {
                 throw new UnauthorizedException("Invalid user name.");
             }
@@ -40,11 +29,11 @@ export class AuthService {
         });
     }
 
-    public login(user: any) {
+    public async login(userDto: UserDto) { 
         return {
-            access_token: this.jwtService.signAsync({
-                username: user.username,
-                sub: user.id
+            access_token: await this.jwtService.signAsync({
+                username: userDto.username,
+                sub: userDto.username
             })
         }
     }

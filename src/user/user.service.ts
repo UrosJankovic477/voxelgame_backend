@@ -5,6 +5,7 @@ import { UserDto } from "./user.dto";
 import * as argon from 'argon2'
 import { error } from "console";
 import { InjectRepository } from "@nestjs/typeorm";
+import { title } from "process";
 
 
 @Injectable()
@@ -27,7 +28,7 @@ export class UserService {
             const userEntitylike: DeepPartial<UserEntity> = {
                 username: user.username,
                 displayname: user.displayname,
-                biography: user.biography,
+                about: user.about,
                 passwordHash: hash,
                 profilePictureLocation: ""
             }; 
@@ -38,19 +39,62 @@ export class UserService {
             console.log(this.userRepository);
         });
     }
-    
-    public userGet(id: Int32): Promise<UserEntity | null> {    
+
+    public userGetWithHash(username: string): Promise<UserEntity | null> {
         return this.userRepository.findOne({
             where: [
                 {
-                    id: id
+                    username: username
+                }
+            ]
+        })
+    }
+    
+    public userGet(username: string): Promise<UserEntity | null> {    
+        return this.userRepository.findOne({
+            select: {
+                username: true,
+                displayname: true,
+                about: true,
+                profilePictureLocation: true,
+            },
+            where: [
+                {
+                    username: username
                 }
             ]
         })
     }
 
-    public userGetBuilds(id: Int32, count?: number) {
-        
+    
+    public userDelete(username: string) {
+        return this.userRepository.delete(username);
+    }
+
+    public userEdit(username: string, userDto: UserDto) {
+        return this.userRepository.update(username, {
+            displayname: userDto.displayname,
+            about: userDto.about
+        })
+    }
+
+    public userGetBuilds(username: string, count: number = 10, page: number = 0) {
+        return this.userRepository.find({
+            relations: {
+                uploadedBuilds: true,
+            },
+            select: {
+                username: true,
+                uploadedBuilds: true,
+            },
+            where: [
+                {
+                    username: username,
+                },
+            ],
+            take: count,
+            skip: page * count
+        });
     }
     
 }

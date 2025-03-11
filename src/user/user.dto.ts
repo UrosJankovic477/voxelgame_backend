@@ -3,5 +3,5 @@ export class UserDto {
     displayname: string;
     password: string;
     confirmPassword: string;
-    biography: string;
+    about: string;
 }

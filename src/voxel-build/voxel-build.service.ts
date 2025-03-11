@@ -13,7 +13,22 @@ export class VoxelBuildService {
     }
 
     public getBuild(uuid: UUID) {
+        return this.voxelBuildReposirory.findOne({
+            where: [
+                {
+                    uuid: uuid,
+                },
+            ]
+        });
+    }
+
+    public getBuildComments(uuid: UUID, count: number = 10, offset: number = 0) {
         return this.voxelBuildReposirory.find({
+            relations: {
+                comments: true,
+            },
+            take: count,
+            skip: offset,
             where: [
                 {
                     uuid: uuid,
@@ -23,10 +38,15 @@ export class VoxelBuildService {
     }
 
     public createBuild(voxelBuildDto: VoxelBuildDto, user: UserEntity) {
-        this.voxelBuildReposirory.create({
+        const voxelBuild = this.voxelBuildReposirory.create({
             title: voxelBuildDto.title,
             fileLocation: voxelBuildDto.fileLocation,
             user: user
         });
+        this.voxelBuildReposirory.save(voxelBuild);
+    }
+
+    public deleteBuild(uuid: UUID) {
+        this.voxelBuildReposirory.delete(uuid);
     }
 }

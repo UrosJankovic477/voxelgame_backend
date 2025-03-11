@@ -1,23 +1,54 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Req } from "@nestjs/common";
+import { BadRequestException, Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Query, Req, UseGuards } from "@nestjs/common";
 import { UUID } from "crypto";
 import { VoxelBuildService } from "src/voxel-build/voxel-build.service";
 import { VoxelBuildDto } from "./voxel-build.dto";
 import { UserEntity } from "src/user/user.entity";
+import { AuthGuard } from "@nestjs/passport";
+import { User } from "src/user/user.decorator";
+import { CommentService } from "src/comment/comment.service";
 
 @Controller('voxel-build')
 export class VoxelBuildController {
-    constructor(private service: VoxelBuildService) {
+    constructor(private service: VoxelBuildService, private commentService: CommentService) {
         
     }
     
     @Get(':uuid')
     public getBuild(@Param('uuid', ParseUUIDPipe) uuid: UUID) {
-        this.service.getBuild(uuid);
+        return this.service.getBuild(uuid);
+    }
+
+    @Get(':uuid/comments')
+    public getBuildComments(@Param('uuid', ParseUUIDPipe) uuid: UUID, @Query('count') count: number = 10, @Query('page') page: number = 1) {
+        if (page < 1) {
+            throw new BadRequestException("Page doesn't exist");
+        }
+        return this.service.getBuildComments(uuid, count, page * count);
     }
 
     @Post()
-    public createBuild(@Body() voxelBuildDto: VoxelBuildDto, @Req() req: Request) {
-        req.
-        this.service.createBuild(voxelBuildDto, user);
+    @UseGuards(AuthGuard('jwt'))
+    public createBuild(@Body() voxelBuildDto: VoxelBuildDto, @User() user) {
+        return this.service.createBuild(voxelBuildDto, user);
     }
+
+    @Delete(':uuid')
+    @UseGuards(AuthGuard('jwt'))
+    public deleteBuild(@Param('uuid', ParseUUIDPipe) uuid: UUID) {
+        return this.service.deleteBuild(uuid);
+    }
+
+    @Post(':uuid/comment')
+    @UseGuards(AuthGuard('jwt'))
+    public createComment(@User() user, @Param('uuid', ParseUUIDPipe) uuid, @Body() content: string) {
+        return this.service.getBuild(uuid).then(voxelBuild => {
+            if (!voxelBuild) {
+                throw new BadRequestException("Post doesn't exist");
+            }
+            return this.commentService.createComment(content, user, voxelBuild);
+        });
+        
+    }
+
+
 }

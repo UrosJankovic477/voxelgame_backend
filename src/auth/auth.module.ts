@@ -8,17 +8,18 @@ import { jwtConstants } from './constants';
 import { LocalStrategy } from './local.strategy';
 import { JwtStrategy } from './jwt.strategy';
 import { Repository } from 'typeorm';
+import { UserService } from 'src/user/user.service';
 
 @Module({
   imports: [
-    UserModule,
     PassportModule,
+    UserModule,
     JwtModule.register({
       secret: jwtConstants.secret
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, LocalStrategy, JwtStrategy, Repository],
+  providers: [AuthService, LocalStrategy, JwtStrategy],
   exports: [AuthModule]
 })
 export class AuthModule {}

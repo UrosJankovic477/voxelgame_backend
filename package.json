@@ -1,5 +1,5 @@
 {
-  "name": "asset_shop_backend",
+  "name": "voxelgame_backend",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -30,6 +30,7 @@
     "argon2": "^0.41.1",
     "class-transformer": "^0.5.1",
     "cookie-parser": "^1.4.7",
+    "nestjs": "^0.0.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
