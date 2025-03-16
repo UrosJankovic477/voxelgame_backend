@@ -12,6 +12,14 @@ export class VoxelBuildController {
     constructor(private service: VoxelBuildService, private commentService: CommentService) {
         
     }
+
+    @Get()
+    public getBuilds(@Query('count') count: number = 10, @Query('page') page: number = 1) {
+        if (page < 1) {
+            throw new BadRequestException("Page doesn't exist");
+        }
+        return this.service.getBuilds(count, (page - 1) * count);
+    }
     
     @Get(':uuid')
     public getBuild(@Param('uuid', ParseUUIDPipe) uuid: UUID) {
@@ -40,15 +48,12 @@ export class VoxelBuildController {
 
     @Post(':uuid/comment')
     @UseGuards(AuthGuard('jwt'))
-    public createComment(@User() user, @Param('uuid', ParseUUIDPipe) uuid, @Body() content: string) {
-        return this.service.getBuild(uuid).then(voxelBuild => {
-            if (!voxelBuild) {
-                throw new BadRequestException("Post doesn't exist");
-            }
-            return this.commentService.createComment(content, user, voxelBuild);
-        });
+    public async createComment(@User() user, @Param('uuid', ParseUUIDPipe) uuid: UUID, @Body() content: string) {
+        const voxelBuild = await this.service.getBuild(uuid);
+        if (!voxelBuild) {
+            throw new BadRequestException("Post doesn't exist");
+        }
+        return await this.commentService.createComment(content, user, voxelBuild);
         
     }
-
-
 }

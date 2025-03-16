@@ -22,6 +22,16 @@ export class VoxelBuildService {
         });
     }
 
+    public getBuilds(count: number, offset: number) {
+        return this.voxelBuildReposirory.find({
+            relations: {
+                user: true
+            },
+            take: count,
+            skip: offset,
+        });
+    }
+
     public getBuildComments(uuid: UUID, count: number = 10, offset: number = 0) {
         return this.voxelBuildReposirory.find({
             relations: {

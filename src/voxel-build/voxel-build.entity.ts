@@ -13,6 +13,12 @@ export class VoxelBuildEntity {
     @Column({name: 'title', length: 256})
     title: string;
 
+    @Column({name: 'description'})
+    description: string;
+
+    @Column({name: 'preview_picture_location', default: ""})
+    previewPictureLocation: string;
+
     @Column({name: 'file_location'})
     fileLocation: string;
 

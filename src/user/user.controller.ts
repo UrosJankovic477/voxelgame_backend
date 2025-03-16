@@ -39,6 +39,11 @@ export class UserController {
         if (page < 1) {
             throw new BadRequestException("Page doesn't exist");
         }
-        return this.service.userGetBuilds(username, count, page - 1) 
+        return this.service.userGetBuilds(username, count, page - 1); 
     }
+
+    @Get()
+    public getUsersLike(@Query() name: string) {
+        return this.service.userGetLike(name);
+    } 
 }

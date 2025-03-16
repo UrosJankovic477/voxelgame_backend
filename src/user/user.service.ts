@@ -1,5 +1,5 @@
 import { BadRequestException, Get, Injectable } from "@nestjs/common";
-import { DeepPartial, Int32, Repository } from "typeorm";
+import { DeepPartial, Int32, Like, Repository } from "typeorm";
 import { UserEntity } from "./user.entity";
 import { UserDto } from "./user.dto";
 import * as argon from 'argon2'
@@ -94,6 +94,25 @@ export class UserService {
             ],
             take: count,
             skip: page * count
+        });
+    }
+
+    public userGetLike(name: string) {
+        this.userRepository.find({
+            select: {
+                username: true,
+                displayname: true,
+                about: true,
+                profilePictureLocation: true,
+            },
+            where: [
+                {
+                    username: Like(name)
+                },
+                {
+                    displayname: Like(name)
+                }
+            ]
         });
     }
     
