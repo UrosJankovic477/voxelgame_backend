@@ -6,6 +6,7 @@ import * as argon from 'argon2'
 import { error } from "console";
 import { InjectRepository } from "@nestjs/typeorm";
 import { title } from "process";
+import multer from "multer";
 
 
 @Injectable()
@@ -14,7 +15,7 @@ export class UserService {
         
     }
 
-    public userCreate(user: UserDto) {
+    public async userCreate(user: UserDto) {
         if (user.password == "") {
             throw new BadRequestException("Password is required.");
         }
@@ -24,20 +25,21 @@ export class UserService {
         if (user.password !== user.confirmPassword) {
             throw new BadRequestException("Password and confirm password don't match.");
         }
-        argon.hash(user.password).then(hash => {
+        try {
+            const hash = await argon.hash(user.password);
             const userEntitylike: DeepPartial<UserEntity> = {
                 username: user.username,
                 displayname: user.displayname,
                 about: user.about,
                 passwordHash: hash,
                 profilePictureLocation: ""
-            }; 
+            };
             const userEntity = this.userRepository.create(userEntitylike);
-            return this.userRepository.save(userEntity);
-        }).catch(reason => {
+            return await this.userRepository.save(userEntity);
+        } catch (reason) {
             console.error(reason);
             console.log(this.userRepository);
-        });
+        }
     }
 
     public userGetWithHash(username: string): Promise<UserEntity | null> {
@@ -74,8 +76,9 @@ export class UserService {
     public userEdit(username: string, userDto: UserDto) {
         return this.userRepository.update(username, {
             displayname: userDto.displayname,
-            about: userDto.about
-        })
+            about: userDto.about,
+            profilePictureLocation: userDto.profilePictureLocation,
+        });
     }
 
     public userGetBuilds(username: string, count: number = 10, page: number = 0) {

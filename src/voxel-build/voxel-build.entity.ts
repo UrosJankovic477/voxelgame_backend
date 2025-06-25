@@ -19,9 +19,6 @@ export class VoxelBuildEntity {
     @Column({name: 'preview_picture_location', default: ""})
     previewPictureLocation: string;
 
-    @Column({name: 'file_location'})
-    fileLocation: string;
-
     @OneToMany(() => CommentEntity, comment => comment.voxelBuild)
     comments: CommentEntity[];
 

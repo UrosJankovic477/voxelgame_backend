@@ -7,9 +7,10 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.modulel';
 import { VoxelBuildEntity } from './voxel-build/voxel-build.entity';
 import { VoxelBuildModule } from './voxel-build/voxel-build.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
-  imports: [TypeOrmModule.forRoot(typeOrmConfig), AuthModule, UserModule, VoxelBuildModule],
+  imports: [TypeOrmModule.forRoot(typeOrmConfig), AuthModule, UserModule, VoxelBuildModule, UploadModule],
   controllers: [AppController],
   providers: [AppService],
 })

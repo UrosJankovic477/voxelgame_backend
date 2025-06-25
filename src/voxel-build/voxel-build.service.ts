@@ -50,10 +50,10 @@ export class VoxelBuildService {
     public createBuild(voxelBuildDto: VoxelBuildDto, user: UserEntity) {
         const voxelBuild = this.voxelBuildReposirory.create({
             title: voxelBuildDto.title,
-            fileLocation: voxelBuildDto.fileLocation,
-            user: user
+            user: user,
+            description: voxelBuildDto.description,
         });
-        this.voxelBuildReposirory.save(voxelBuild);
+        return this.voxelBuildReposirory.save(voxelBuild).then(voxelBuildEntity => voxelBuildEntity.uuid);
     }
 
     public deleteBuild(uuid: UUID) {

@@ -34,7 +34,8 @@ export class AuthService {
             access_token: await this.jwtService.signAsync({
                 username: userDto.username,
                 sub: userDto.username
-            })
+            }),
+            user: await this.userService.userGet(userDto.username)
         }
     }
 }
