@@ -1,22 +1,33 @@
+import { UUID } from "crypto";
+import { PostEntity } from "src/post/post.entity";
 import { UserEntity } from "src/user/user.entity";
 import { VoxelBuildEntity } from "src/voxel-build/voxel-build.entity";
-import { Column, Entity, IntegerType, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, DeleteDateColumn, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity('comment')
-export class CommentEntity {
-    
-    @PrimaryGeneratedColumn('increment')
-    id: IntegerType;
+@Entity('comments')
+export class CommentEntity extends PostEntity {
 
     @Column({name: 'content'})
     content: string;
 
-    @ManyToOne(() => VoxelBuildEntity, voxelBuild => voxelBuild.comments)
-    voxelBuild: VoxelBuildEntity;
+    @DeleteDateColumn()
+    deleted: Date | null;
 
-    @ManyToOne(() => UserEntity, user => user.comments)
+    @ManyToOne(() => VoxelBuildEntity, voxelBuild => voxelBuild.comments, {
+        nullable: true,
+        
+    })
+    voxelBuild: VoxelBuildEntity | null;
+
+    @ManyToOne(() => UserEntity, user => user.comments, {
+        onDelete: 'SET NULL',
+        nullable: true
+    })
     user: UserEntity;
 
-    @OneToMany(() => CommentEntity, comment => comment.replies)
+    @OneToMany(() => CommentEntity, comment => comment.parent)
     replies: CommentEntity[];
+
+    @ManyToOne(() => CommentEntity, comment => comment.replies)
+    parent: CommentEntity;
 }

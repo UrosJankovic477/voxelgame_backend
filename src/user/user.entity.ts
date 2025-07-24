@@ -1,5 +1,5 @@
 import { VoxelBuildEntity } from "src/voxel-build/voxel-build.entity";
-import { Column, Entity, Int32, OneToMany, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Int32, JoinTable, ManyToMany, OneToMany, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 import { Exclude } from 'class-transformer';
 import { CommentEntity } from "src/comment/comment.entity";
 
@@ -16,8 +16,13 @@ export class UserEntity {
     @Column({length: 256, name: 'about', default: ""})
     about: string;
 
-    @Column({name: 'profile_picture_location', default: ""})
-    profilePictureLocation: string;
+    @Column({
+        name: 'profile_picture_location', 
+        type: "varchar",
+        default: null,
+        nullable: true,
+    })
+    profilePictureLocation: string | null;
 
     @Column({name: 'password_hash'})
     passwordHash: string;
@@ -27,5 +32,18 @@ export class UserEntity {
 
     @OneToMany(() => CommentEntity, comment => comment.user)
     comments: CommentEntity[];
+
+    @ManyToMany(() => UserEntity)
+    @JoinTable({
+        name: 'producer_subscriber',
+        joinColumn: {
+            name: 'producer'
+        },
+        inverseJoinColumn: {
+            name: 'subscriber'
+        }
+
+    })
+    subscribers: UserEntity[]
 
 }

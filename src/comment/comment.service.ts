@@ -4,6 +4,9 @@ import { IntegerType, Repository } from "typeorm";
 import { CommentEntity } from "./comment.entity";
 import { UserEntity } from "src/user/user.entity";
 import { VoxelBuildEntity } from "src/voxel-build/voxel-build.entity";
+import { UUID } from "crypto";
+import { off } from "process";
+import { repl } from "@nestjs/core";
 
 @Injectable()
 export class CommentService {
@@ -11,32 +14,88 @@ export class CommentService {
         
     }
 
-    public getCommentReplies(id: number, count: number = 10, offset: number = 0) {
-        this.commentRepository.find({
-            relations: {
-                user: true,
-                voxelBuild: true,
-                replies: {
-                    user: true
-                }, 
-            }
-        });
+    public async getCommentReplies(uuid: UUID, count: number = 10, offset: number = 0) {
+        const replies = this.commentRepository.createQueryBuilder('comment')
+        .addSelect('comment.uuid', 'uuid')
+        .addSelect('comment.content', 'content')
+        .addSelect('comment.posted', 'posted')
+        .addSelect('comment.edited', 'edited')
+        .addSelect('comment."parentUUID"', 'parentUUID')
+        .leftJoin('comment.user', 'user')
+        .addSelect('user.username', 'username')
+        .addSelect('user.displayname', 'displayname')
+        .addSelect('user.profile_picture_location', 'profilePictureLocation')
+        .leftJoin('comment.voxelBuild', 'voxel_build')
+        .addSelect('voxel_build."userUsername"', 'op')
+        .where('"comment"."parentUUID" = :parentUUID', {
+            parentUUID: uuid
+        })
+        .skip(offset).take(count);
+        return {
+            replies: await replies.getRawMany(),
+            count: await replies.getCount()
+        };
     } 
 
-    public createComment(content: string, user: UserEntity, voxelBuild: VoxelBuildEntity) {
+    public async getComments(uuid: UUID, count: number = 10, offset: number = 0) {
+        const comments = this.commentRepository
+        .createQueryBuilder('comment')
+        .addSelect('comment.uuid', 'uuid')
+        .addSelect('comment.content', 'content')
+        .addSelect('comment.posted', 'posted')
+        .addSelect('comment.edited', 'edited')
+        .leftJoin('comment.user', 'user')
+        .addSelect('user.username', 'username')
+        .addSelect('user.displayname', 'displayname')
+        .addSelect('user.profile_picture_location', 'profilePictureLocation')
+        .leftJoin('comment.voxelBuild', 'voxel_build')
+        .addSelect('voxel_build."userUsername"', 'op')
+        .where('"comment"."voxelBuildUuid" = :postUuid', {
+            postUuid: uuid
+        })
+        .skip(offset).take(count);
+        return {
+            comments: await comments.getRawMany(),
+            count: await comments.getCount()
+        };
+    }
+
+    public async postReply(content: string, username: string, parentUUID: UUID) {
+        const reply = this.commentRepository.create({
+            content,
+            edited: null,
+            posted: new Date(),
+            user: {
+                username
+            },
+            voxelBuild: null,
+            parent: {
+                uuid: parentUUID
+            }
+        });
+        return this.commentRepository.save(reply);
+    }
+
+    public createComment(content: string, username: string, postUuid: UUID) {
         const comment = this.commentRepository.create({
             content: content,
-            user: user,
-            voxelBuild: voxelBuild
+            edited: null,
+            posted: new Date(),
+            user: {
+                username
+            },
+            voxelBuild: {
+                uuid: postUuid
+            }
         });
         return this.commentRepository.save(comment);
     }
 
-    public async editComment(id: number, content: string, username: string) {
+    public async editComment(uuid: UUID, content: string, username: string) {
         const result = await this.commentRepository.exists({
             where: [
                 {
-                    id: id,
+                    uuid: uuid,
                     user: {
                         username: username
                     },
@@ -44,7 +103,7 @@ export class CommentService {
             ],
         });
         if (result) {
-            return this.commentRepository.update(id, {
+            return this.commentRepository.update(uuid, {
                 content: content
             });
         }
@@ -53,11 +112,11 @@ export class CommentService {
         }
     }
 
-    public async deleteComment(id: number, username: string) {
+    public async deleteComment(uuid: UUID, username: string) {
         const result = await this.commentRepository.exists({
             where: [
                 {
-                    id: id,
+                    uuid: uuid,
                     user: {
                         username: username
                     },
@@ -65,7 +124,7 @@ export class CommentService {
             ],
         });
         if (result) {
-            return this.commentRepository.delete(id);
+            return this.commentRepository.softDelete(uuid);
         }
         else {
             throw new UnauthorizedException();

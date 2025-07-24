@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, ParseIntPipe, ParseUUIDPipe, Post, Put, Query, UnauthorizedException, UseGuards } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
+import { UUID } from "crypto";
 import { CommentService } from "src/comment/comment.service";
 import { User } from "src/user/user.decorator";
 
@@ -8,25 +9,31 @@ export class CommentController {
     constructor(private service: CommentService) {
         
     }
+
+    @Post(':uuid')
+    @UseGuards(AuthGuard('jwt'))
+    public postReply(@Param('uuid', ParseUUIDPipe) uuid: UUID, @User() user, @Body('content') content: string) {
+        return this.service.postReply(content, user.username, uuid);
+    }
     
-    @Get(':id')
-    public getCommentReplies(@Param('id', ParseIntPipe) id: number, @Query('count') count: number = 10, @Query('page') page: number = 1) {
+    @Get(':uuid/replies')
+    public getCommentReplies(@Param('uuid', ParseUUIDPipe) uuid: UUID, @Query('count') count: number = 10, @Query('page') page: number = 1) {
         if (page < 1) {
             throw new UnauthorizedException("The page doesn't exist");
         }
-        return this.service.getCommentReplies(id, count, page * count);
+        return this.service.getCommentReplies(uuid, count, (page - 1) * count);
     }
     
-    @Delete(':id')
+    @Delete(':uuid')
     @UseGuards(AuthGuard('jwt'))
-    public deleteComment(@Param('id', ParseIntPipe) id: number, @User() user) {
-        return this.service.deleteComment(id, user.username);
+    public deleteComment(@Param('uuid', ParseUUIDPipe) uuid: UUID, @User() user) {
+        return this.service.deleteComment(uuid, user.username);
     }
 
-    @Put(':id')
+    @Put(':uuid')
     @UseGuards(AuthGuard('jwt'))
-    public editComment(@Param('id', ParseIntPipe) id: number, @User() user, @Body() content: string) {
-        return this.service.editComment(id, content, user.username)
+    public editComment(@Param('uuid', ParseUUIDPipe) uuid: UUID, @User() user, @Body('content') content: string) {
+        return this.service.editComment(uuid, content, user.username)
     }
     
 }

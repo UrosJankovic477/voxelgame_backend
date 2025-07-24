@@ -35,7 +35,7 @@ export class AuthService {
                 username: userDto.username,
                 sub: userDto.username
             }),
-            user: await this.userService.userGet(userDto.username)
+            user: await this.userService.userGet(userDto.username!)
         }
     }
 }

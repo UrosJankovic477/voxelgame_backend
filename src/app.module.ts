@@ -8,9 +8,19 @@ import { UserModule } from './user/user.modulel';
 import { VoxelBuildEntity } from './voxel-build/voxel-build.entity';
 import { VoxelBuildModule } from './voxel-build/voxel-build.module';
 import { UploadModule } from './upload/upload.module';
+import { NotificationModule } from './notification/notification.module';
+import { MulterModule } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 
 @Module({
-  imports: [TypeOrmModule.forRoot(typeOrmConfig), AuthModule, UserModule, VoxelBuildModule, UploadModule],
+  imports: [
+    TypeOrmModule.forRoot(typeOrmConfig), 
+    AuthModule, 
+    UserModule, 
+    VoxelBuildModule, 
+    UploadModule, 
+    NotificationModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

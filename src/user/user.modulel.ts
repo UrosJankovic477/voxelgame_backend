@@ -5,10 +5,11 @@ import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { AuthModule } from 'src/auth/auth.module';
 import { Repository } from 'typeorm';
+import { UploadService } from 'src/upload/upload.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([UserEntity])],
-  providers: [UserService],
+  providers: [UserService, UploadService],
   controllers: [UserController],
   exports: [UserService]
 })
