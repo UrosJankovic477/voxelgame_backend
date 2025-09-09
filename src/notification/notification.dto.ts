@@ -1,7 +1,7 @@
 import { UUID } from "crypto";
 
 export interface NotificationDto {
-   sourceUUID: UUID,
+   sourceUuid: UUID,
    subscribersUsernames: string[],
    notificationType: 'comment' | 'voxel-build'
 }

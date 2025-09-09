@@ -4,5 +4,7 @@ COPY package*.json ./
 RUN npm install
 RUN npm audit fix
 COPY ./ ./
+ARG passwordArg
+ENV password=$passwordArg
 RUN npm run build
 CMD ["npm", "run", "start:dev"]

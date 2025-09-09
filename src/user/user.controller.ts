@@ -8,12 +8,14 @@ import { UserEntity } from "./user.entity";
 import { ImageFileInterceptor, UploadService } from "src/upload/upload.service";
 import { log } from "console";
 import { Type } from "class-transformer";
+import { VoxelBuildService } from "src/voxel-build/voxel-build.service";
 
 @Controller('user')
 export class UserController {
     constructor(
         private userService: UserService,
-        private uploadService: UploadService
+        private uploadService: UploadService,
+        private voxelBuildService: VoxelBuildService
     ) {
         
     }
@@ -66,11 +68,11 @@ export class UserController {
     }
 
     @Get(':username/builds')
-    public getUserBuilds(@Param('username') username: string, @Query('count') count?: number, @Query('page') page: number = 1) {
+    public getUserBuilds(@Param('username') username: string, @Query('count') count: number = 10, @Query('page') page: number = 1) {
         if (page < 1) {
             throw new BadRequestException("Page doesn't exist");
         }
-        return this.userService.userGetBuilds(username, count, page - 1); 
+        return this.voxelBuildService.getUserBuilds(username, count, (page - 1) * count!); 
     }
 
     @Get()
@@ -94,11 +96,5 @@ export class UserController {
     @UseGuards(AuthGuard('jwt'))
     public isSubcribed(@Param('username') producerUsername: string, @User() user) {
         return this.userService.isSubscribed(producerUsername, user.username);
-    }
-
-    @Get('subscribers')
-    @UseGuards(AuthGuard('jwt'))
-    public getSubscriptions(@User() user) {
-        return this.userService.getSubscriptions(user.username);
     }
 }

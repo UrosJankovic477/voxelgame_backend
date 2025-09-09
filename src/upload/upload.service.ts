@@ -59,8 +59,12 @@ export class UploadService {
     }
 
     savePostFile(file: Express.Multer.File, uuid: UUID) {
-        JSON.parse(file.buffer.toString());
-        const filename = + uuid + '.json';
+        try {
+            JSON.parse(file.buffer.toString());
+        } catch (error) {
+            throw new HttpException('Invalid JSON', HttpStatus.BAD_REQUEST);
+        }
+        const filename = uuid + '.json';
         const uploadPath = path.join(uploadDirPosts, filename);
         if (fs.existsSync(uploadPath)) {
             fs.unlinkSync(uploadPath);

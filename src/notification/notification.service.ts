@@ -13,16 +13,31 @@ export class NotificationService {
 
     postNotification(notificationDto: NotificationDto) {
         const posted = new Date();
+        let uuidPart;
+
+        if (notificationDto.notificationType == 'comment') {
+            uuidPart = {
+                comment: {
+                    uuid: notificationDto.sourceUuid
+                }
+            };
+        }
+        else {
+            uuidPart = {
+                voxelBuild: {
+                    uuid: notificationDto.sourceUuid
+                }
+            };
+        }
+
         const notifications = notificationDto.subscribersUsernames.map<DeepPartial<NotificationEntity>>(username => ({
             user: {
                 username
             },
             posted,
-            source: {
-                uuid: notificationDto.sourceUUID
-            }
-        }))
-        return this.notificationRepository.save(notifications);
+            ...uuidPart
+        }));
+        return this.notificationRepository.insert(notifications);
     }
 
     async getNotifications(username: string) {
@@ -35,17 +50,23 @@ export class NotificationService {
         .addSelect('notification.comment_uuid', 'commentUuid')
         .where('notification."username" = :username', { username })
         .leftJoin('comments', 'comment', 'notification."comment_uuid" = "comment".post_uuid')
-        .addSelect('"comment"."userUsername"', "commentUsername")
-        .addSelect('"comment"."parentUuid"', "commentParentUuid")
+        .addSelect('comment."userUsername"', 'commentUsername')
+        .addSelect('comment."parentUuid"', 'commentParentUuid')
+        .addSelect('comment."voxelBuildUuid"', 'commentPostUuid')
+        .addSelect('comment.content', 'commentContent')
         .leftJoin('voxel_builds', 'vb', 'notification."voxel_build_uuid" = vb.post_uuid')
         .addSelect('vb."userUsername"', 'voxelBuildUsername')
+        .addSelect('vb.title', 'voxelBuildTitle')
         .leftJoin('users', 'u', 'vb."userUsername" = u.username or comment."userUsername" = u.username')
         .addSelect('u.username', 'posterUsername')
         .addSelect('u.displayname', 'posterDisplayname')
         .addSelect('u.profile_picture_location', 'profilePictureLocation')
         .getRawMany();
         const unreadCount = await this.notificationRepository.countBy({
-            read: false
+            read: false,
+            user: {
+                username
+            }
         });
         return [notifications, unreadCount];
     }

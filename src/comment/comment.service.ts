@@ -14,33 +14,36 @@ export class CommentService {
         
     }
 
-    public async getCommentReplies(uuid: UUID, count: number = 10, offset: number = 0) {
+    public getCommentUsername(uuid: UUID) {
+        return this.commentRepository.query(`
+            select "userUsername" from comments where post_uuid = $1;
+            `, [uuid]).then((value: { userUsername: string }[]) => value[0].userUsername);
+    }
+
+    public getCommentReplies(uuid: UUID, count: number = 10, offset: number = 0) {
         const replies = this.commentRepository.createQueryBuilder('comment')
         .addSelect('comment.uuid', 'uuid')
         .addSelect('comment.content', 'content')
         .addSelect('comment.posted', 'posted')
         .addSelect('comment.edited', 'edited')
-        .addSelect('comment."parentUUID"', 'parentUUID')
+        .addSelect('comment."parentUuid"', 'parentUuid')
         .leftJoin('comment.user', 'user')
         .addSelect('user.username', 'username')
         .addSelect('user.displayname', 'displayname')
         .addSelect('user.profile_picture_location', 'profilePictureLocation')
         .leftJoin('comment.voxelBuild', 'voxel_build')
         .addSelect('voxel_build."userUsername"', 'op')
-        .where('"comment"."parentUUID" = :parentUUID', {
-            parentUUID: uuid
+        .where('"comment"."parentUuid" = :parentUuid', {
+            parentUuid: uuid
         })
-        .skip(offset).take(count);
-        return {
-            replies: await replies.getRawMany(),
-            count: await replies.getCount()
-        };
+        .offset(offset).limit(count);
+        return replies.getRawMany();
     } 
 
     public async getComments(uuid: UUID, count: number = 10, offset: number = 0) {
         const comments = this.commentRepository
         .createQueryBuilder('comment')
-        .addSelect('comment.uuid', 'uuid')
+        .addSelect('comment.post_uuid', 'uuid')
         .addSelect('comment.content', 'content')
         .addSelect('comment.posted', 'posted')
         .addSelect('comment.edited', 'edited')
@@ -50,17 +53,28 @@ export class CommentService {
         .addSelect('user.profile_picture_location', 'profilePictureLocation')
         .leftJoin('comment.voxelBuild', 'voxel_build')
         .addSelect('voxel_build."userUsername"', 'op')
+        .leftJoin('comment.replies', 'reply', 'comment.post_uuid = reply.parentUuid')
+        .addSelect('count(reply.parentUuid)')
         .where('"comment"."voxelBuildUuid" = :postUuid', {
             postUuid: uuid
         })
-        .skip(offset).take(count);
+        .addGroupBy('uuid')
+        .addGroupBy('username')
+        .addGroupBy('op')
+        .addOrderBy('count', 'DESC')
+        .addOrderBy('posted', 'ASC')
+        .offset(offset).limit(count);
         return {
             comments: await comments.getRawMany(),
             count: await comments.getCount()
         };
     }
 
-    public async postReply(content: string, username: string, parentUUID: UUID) {
+    public async postReply(content: string, username: string, parentUuid: UUID) {
+        const voxelBuildUuid = await this.commentRepository.query(`
+            select "voxelBuildUuid" from comments where post_uuid = $1;
+            `, [parentUuid]).then(result => result[0].voxelBuildUuid);
+        
         const reply = this.commentRepository.create({
             content,
             edited: null,
@@ -68,12 +82,14 @@ export class CommentService {
             user: {
                 username
             },
-            voxelBuild: null,
+            voxelBuild: {
+                uuid: voxelBuildUuid
+            },
             parent: {
-                uuid: parentUUID
+                uuid: parentUuid
             }
         });
-        return this.commentRepository.save(reply);
+        return this.commentRepository.insert(reply).then(value => value.identifiers[0].uuid as UUID);
     }
 
     public createComment(content: string, username: string, postUuid: UUID) {

@@ -9,11 +9,28 @@ import { NotificationService } from "src/notification/notification.service";
 
 @Injectable()
 export class VoxelBuildService {
+    
+
     constructor(
         @InjectRepository(VoxelBuildEntity) private voxelBuildReposirory: Repository<VoxelBuildEntity>,
         private notificationService: NotificationService
     ) {
         
+    }
+
+    getBuildUserUsername(uuid: string) {
+        return this.voxelBuildReposirory.query(`
+            select "userUsername" from voxel_builds where post_uuid = $1; 
+            `, [uuid]).then((value: {userUsername: string}[]) => value[0].userUsername)
+    }
+
+    public getUserBuilds(username: string, count: number, offset: number) {
+        return this.voxelBuildReposirory
+        .createQueryBuilder('vb')
+        .where('vb."userUsername" = :username', {username})
+        .take(count)
+        .offset(offset)
+        .getMany()
     }
 
     public getBuild(uuid: UUID) {
@@ -22,7 +39,7 @@ export class VoxelBuildService {
         .leftJoin('voxel_build.user', 'user')
         .addSelect(['user.username', 'user.displayname'])
         .where('voxel_build.uuid = :uuid', {uuid: uuid})
-        .getOneOrFail();
+        .getOne();
     }
 
     public getBuilds(count: number, offset: number, searchString?: string) {
@@ -73,11 +90,12 @@ export class VoxelBuildService {
                 select subscriber 
                 from producer_subscriber
                 where producer = $1;
-                `, [username]);
+                `, [username])
+                .then((subscribers: {subscriber: string}[]) => subscribers.map(object => object.subscriber));
     
             return subscribers.then(subscribers => buildSaveResult.then(voxelBuildEntity => {
                     this.notificationService.postNotification({
-                    sourceUUID: voxelBuildEntity.uuid,
+                    sourceUuid: voxelBuildEntity.uuid,
                     subscribersUsernames: subscribers,
                     notificationType: "voxel-build"
                 });

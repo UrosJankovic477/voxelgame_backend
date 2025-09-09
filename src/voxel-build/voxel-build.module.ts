@@ -20,7 +20,7 @@ import { UploadModule } from "src/upload/upload.module";
     ],
     providers: [VoxelBuildService],
     controllers: [VoxelBuildController],
-
+    exports: [VoxelBuildService]
 
 })
 export class VoxelBuildModule {

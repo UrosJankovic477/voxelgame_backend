@@ -12,13 +12,17 @@ import multer from "multer";
 @Injectable()
 export class UserService {
 
+    constructor(@InjectRepository(UserEntity) private userRepository: Repository<UserEntity>) {
+        
+    }
+
     getSubscriptions(username: string) {
         return this.userRepository.query(`
             select username, displayname, profile_picture_location "profilePictureLocation" 
             from producer_subscriber 
             left join users u on producer = u.username
             where subscriber = $1;
-            `, [username])
+            `, [username]);
     }
 
     getNumberOfSubscribers(username: string) {
@@ -30,10 +34,6 @@ export class UserService {
                 subscribers: true
             }
         });
-    }
-    
-    constructor(@InjectRepository(UserEntity) private userRepository: Repository<UserEntity>) {
-        
     }
 
     public async userCreate(user: UserDto) { 
@@ -102,24 +102,7 @@ export class UserService {
         });
     }
 
-    public userGetBuilds(username: string, count: number = 10, page: number = 0) {
-        return this.userRepository.find({
-            relations: {
-                uploadedBuilds: true,
-            },
-            select: {
-                username: true,
-                uploadedBuilds: true,
-            },
-            where: [
-                {
-                    username: username,
-                },
-            ],
-            take: count,
-            skip: page * count
-        });
-    }
+    
 
     public userGetLike(name: string) {
         this.userRepository.find({
