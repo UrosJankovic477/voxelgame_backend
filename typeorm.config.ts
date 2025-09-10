@@ -7,7 +7,7 @@ import { VoxelBuildEntity } from "src/voxel-build/voxel-build.entity";
 
 export const typeOrmConfig: TypeOrmModuleOptions = {
     type: 'postgres',
-    host: 'localhost',
+    host: '192.168.1.195',
     port: 5432,
     username: 'postgres',
     password: process.env.password,
